@@ -5,6 +5,7 @@ import pickle
 import sqlite3
 from multiprocessing.pool import ThreadPool
 from time import time
+import dateutil.parser
 
 import piexif
 import piexif.helper
@@ -201,11 +202,12 @@ class PhotosAccount(object):
 
     def download_media_item(self, entry):
         try:
-            uuid, album_uuid, url, path, description = entry
+            uuid, album_uuid, url, path, description, metadata = entry
             if not os.path.isfile(path):
                 r = requests.get(url)
                 if r.status_code == 200:
                     path = auto_filename(path)
+
                     if description:
                         try:
                             img = Image.open(io.BytesIO(r.content))
@@ -233,6 +235,11 @@ class PhotosAccount(object):
                             open(path, "wb").write(r.content)
                     else:
                         open(path, "wb").write(r.content)
+                    if metadata:
+                        open(path + ".json", "wb").write(json.dumps(metadata).encode('utf8'))
+
+                    create_time = dateutil.parser.isoparse(metadata['creationTime'])
+                    os.utime(path, (create_time.timestamp(), create_time.timestamp()))
 
                     self.downloads += 1
                     return (
@@ -315,6 +322,7 @@ class PhotosAccount(object):
                         item["baseUrl"] + "=d",
                         item_path,
                         item["description"],
+                        item["mediaMetadata"],
                     )
                 )
             # - Video
@@ -326,6 +334,7 @@ class PhotosAccount(object):
                         item["baseUrl"] + "=dv",
                         item_path,
                         item["description"],
+                        item["mediaMetadata"],
                     )
                 )
 
