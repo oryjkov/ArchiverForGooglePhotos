@@ -83,18 +83,19 @@ def auto_filename(path, instance=0):
     Recursively finds an available name for a new file and
     appends a number -> (#) to the end if that file already exists
     """
-    if instance:
-        extension_index = path.rfind(".")
-        new_path = (
-            path[:extension_index] + " (" + str(instance) + ")" + path[extension_index:]
-        )
-    else:
-        new_path = path
+    while True:
+        if instance:
+            extension_index = path.rfind(".")
+            new_path = (
+                path[:extension_index] + " (" + str(instance) + ")" + path[extension_index:]
+            )
+        else:
+            new_path = path
 
-    if not os.path.exists(new_path):
-        return new_path
-    else:
-        return auto_filename(path, instance + 1)
+        if not os.path.exists(new_path):
+            return new_path
+
+        instance = instance + 1
 
 
 def save_json(variable, path):
